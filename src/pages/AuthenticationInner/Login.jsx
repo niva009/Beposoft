@@ -1,41 +1,52 @@
-import React, { useState } from "react";
+  import React, { useState } from "react";
 
-// Redux
-import { Link } from "react-router-dom";
+  // Redux
+  import { Link } from "react-router-dom";
 
-import { Row, Col, CardBody, Card, Container, Form, Input, Label, FormFeedback } from "reactstrap";
+  import { Row, Col, CardBody, Card, Container, Form, Input, Label, FormFeedback } from "reactstrap";
 
-// Formik validation
-import * as Yup from "yup";
-import { useFormik } from "formik";
+  // Formik validation
+  import * as Yup from "yup";
+  import { useFormik } from "formik";
+  import axios from "axios";
 
-// import images
-import profile from "../../assets/images/profile-img.png";
-import logo from "../../assets/images/logo.svg";
-import lightlogo from "../../assets/images/logo-light.svg";
+  // import images
+  import profile from "../../assets/images/profile-img.png";
+  import logo from "../../assets/images/logo.svg";
+  import lightlogo from "../../assets/images/logo-light.svg";
 
-const Login = () => {
-  const [show, setShow] = useState(false);
+  const Login = () => {
+    const [show, setShow] = useState(false);
 
-  //meta title
-  document.title = "Login | Skote - Vite React Admin & Dashboard Template";
+    //meta title
+    document.title = "Login | Skote - Vite React Admin & Dashboard Template";
 
-  // Form validation 
-  const validation = useFormik({
-    // enableReinitialize : use this flag when initial values needs to be changed
-    enableReinitialize: true,
+    // Form validation 
+    const validation = useFormik({
+      // enableReinitialize : use this flag when initial values needs to be changed
+      // enableReinitialize: true,
 
-    initialValues: {
-      username: '',
-      password: '',
-    },
-    validationSchema: Yup.object({
-      username: Yup.string().required("Please Enter Your username"),
-      password: Yup.string().required("Please Enter Your Password"),
-    }),
-    onSubmit: (values) => {
-    }
-  });
+      initialValues: {
+        email: '',
+        password: '',
+      },
+      validationSchema: Yup.object({
+        email: Yup.string().required("Please Enter Your email"),
+        password: Yup.string().required("Please Enter Your Password"),
+      }),
+      onSubmit: (values) => {
+        axios.post('https://racing-soul-suffer-alexander.trycloudflare.com/api/login/',values)
+
+        .then((res) =>{
+          console.log("registration success",res);
+          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('active', res.data.active);
+        })
+        .catch((error) =>{
+          console.log("error registration failed",error);
+        })
+      }
+    });
   return (
     <React.Fragment>      
       <div className="account-pages my-5 pt-sm-5">
@@ -48,7 +59,7 @@ const Login = () => {
                     <Col className="col-7">
                       <div className="text-primary p-4">
                         <h5 className="text-primary">Welcome Back !</h5>
-                        <p>Sign in to continue to Skote.</p>
+                        <p>Sign in to continue to Beposoft.</p>
                       </div>
                     </Col>
                     <Col className="col-5 align-self-end">
@@ -92,21 +103,21 @@ const Login = () => {
                       }}
                     >
                       <div className="mb-3">
-                        <Label className="form-label">Username</Label>
+                        <Label className="form-label">email</Label>
                         <Input
-                          name="username"
+                          name="email"
                           className="form-control"
-                          placeholder="Enter username"
+                          placeholder="Enter email"
                           type="text"
                           onChange={validation.handleChange}
                           onBlur={validation.handleBlur}
-                          value={validation.values.username || ""}
+                          value={validation.values.email || ""}
                           invalid={
-                            validation.touched.username && validation.errors.username ? true : false
+                            validation.touched.email && validation.errors.email ? true : false
                           }
                         />
-                        {validation.touched.username && validation.errors.username ? (
-                          <FormFeedback type="invalid">{validation.errors.username}</FormFeedback>
+                        {validation.touched.email && validation.errors.email ? (
+                          <FormFeedback type="invalid">{validation.errors.email}</FormFeedback>
                         ) : null}
                       </div>
 
