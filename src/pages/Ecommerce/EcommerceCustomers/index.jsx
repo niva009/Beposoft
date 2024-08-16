@@ -3,6 +3,10 @@ import PropTypes from "prop-types";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, UncontrolledTooltip, Input, FormFeedback, Label, Form, UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
+import axios from "axios";
+import { jwt_decode } from "jwt-decode";
+
+
 
 //Import Breadcrumb
 import Breadcrumbs from "/src/components/Common/Breadcrumb";
@@ -10,10 +14,10 @@ import Breadcrumbs from "/src/components/Common/Breadcrumb";
 import DeleteModal from "../../../components/Common/DeleteModal";
 import {
   getCustomers as onGetCustomers,
-  addNewCustomer as onAddNewCustomer,
+  addNewCustomer as onAddNewCustomer,   
   updateCustomer as onUpdateCustomer,
   deleteCustomer as onDeleteCustomer,
-} from "/src/store/e-commerce/actions";
+} from "../../../store/e-commerce/actions";
 
 //redux
 import { useSelector, useDispatch } from "react-redux";
@@ -32,7 +36,7 @@ import { PatternFormat } from "react-number-format";
 
 const EcommerceCustomers = () => {
   //meta title
-  document.title = "Customers | Skote - Vite React Admin & Dashboard Template";
+  document.title = "Customers | Beposoft";
 
   const dispatch = useDispatch();
 
@@ -53,6 +57,20 @@ const EcommerceCustomers = () => {
   const [modal, setModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [customer, setCustomer] = useState(null);
+  
+
+  // const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$/;
+  const indianPinCodeRegex = /^[1-9][0-9]{5}$/;
+  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+  const token = localStorage.getItem("token");
+  const decoded = jwt_decode(token);
+
+  console.log("decoded token...:",decoded);
+
+
+  console.log("token data", token);
+
 
   // validation
   const validation = useFormik({
@@ -60,26 +78,32 @@ const EcommerceCustomers = () => {
     enableReinitialize: true,
 
     initialValues: {
-      username: (customer && customer.username) || "",
+      gst:(customer && customer.gst)  || "",
+      manager:(customer && customer.manager) || "",
+      name: (customer && customer.name) || "",
       phone: (customer && customer.phone) || "",
+      alt_phone:(customer && customer.alt_phone) || "",
       email: (customer && customer.email) || "",
       address: (customer && customer.address) || "",
-      rating: (customer && customer.rating) || "",
-      walletBalance: (customer && customer.walletBalance) || "",
-      joiningDate: (customer && customer.joiningDate) || "",
+      zip_code: (customer && customer.zip_code) || "",
+      city: (customer && customer.city) || "",
+      state: (customer && customer.state) || "",
+      comment: (customer && customer.comment) || "",
     },
     validationSchema: Yup.object({
-      username: Yup.string().required("Please Enter Your Name"),
-      phone: Yup.string().required("Please Enter Your Phone"),
+      gst: Yup.string().matches(gstRegex,"enter valid gst number"),
+      manager:Yup.string(),
+      name: Yup.string().required("Please Enter Your Name"),
+      phone: Yup.string().required("Please Enter Your Phone").matches(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+      alt_phone:Yup.string().matches(/^\d{10}$/, "Phone number must be exactly 10 digits"),
       email: Yup.string()
-        .matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, "Please Enter Valid Email")
-        .required("Please Enter Your Email"),
+        .matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, "Please Enter Valid Email"),
       address: Yup.string().required("Please Enter Your Address"),
-      rating: Yup.string()
-        .matches(/\b([0-9]|10)\b/, "Please Enter Valid Rating")
-        .required("Please Enter Your Rating"),
-      walletBalance: Yup.string().required("Please Enter Your Wallet Balance"),
-      joiningDate: Yup.string().required("Please Enter Your Joining Date"),
+      zip_code: Yup.string().matches(indianPinCodeRegex,"enter valid pincode")
+        
+        .required("Please Enter Your zip_code"),
+        city: Yup.string().required("Please enter city"),
+      state: Yup.string().required("select state"),
     }),
     onSubmit: (values) => {
       if (isEdit) {
@@ -97,17 +121,28 @@ const EcommerceCustomers = () => {
         dispatch(onUpdateCustomer(updateCustomer));
         validation.resetForm();
       } else {
-        const newCustomer = {
-          id: Math.floor(Math.random() * (30 - 20)) + 20,
-          username: values["username"],
+        const newCustomer = {  
+          manager: values["manager"],
+          name: values["name"],
+          gst: values["gst"],
           phone: values["phone"],
+          alt_phone: values["alt_phone"],
           email: values["email"],
           address: values["address"],
-          rating: values["rating"],
-          walletBalance: values["walletBalance"],
-          joiningDate: values["joiningDate"],
+          zip_code: values["zip_code"],
+          city: values["city"],
+          state: values["state"],
+          comment: values["comment"],
         };
-        // save new customer
+        axios.post(`${import.meta.env.VITE_APP_APIKEY}api/add/customer/`,newCustomer,
+          {headers: {"Authorization": `${token}`}}
+        )
+        .then((res) =>{
+          console.log("customer reg completed successfully",res)
+        })
+        .catch((err) =>{
+          console.log("customer reg failed",err)
+        })
         dispatch(onAddNewCustomer(newCustomer));
         validation.resetForm();
       }
@@ -119,14 +154,16 @@ const EcommerceCustomers = () => {
     const customer = arg;
 
     setCustomer({
-      id: customer.id,
-      username: customer.username,
+      name: customer.name,
+      gst: customer.gst,
       phone: customer.phone,
+      alt_phone: customer.alt_phone,
       email: customer.email,
       address: customer.address,
-      rating: customer.rating,
-      walletBalance: customer.walletBalance,
-      joiningDate: customer.joiningDate,
+      city: customer.city,
+      zip_code: customer.zip_code,
+      state: customer.state,
+      comment: customer.comment,
     });
 
     setIsEdit(true);
@@ -146,8 +183,8 @@ const EcommerceCustomers = () => {
         enableSorting: true,
       },
       {
-        header: "Username",
-        accessorKey: "username",
+        header: "Name",
+        accessorKey: "name",
         enableColumnFilter: false,
         enableSorting: true,
       },
@@ -171,8 +208,14 @@ const EcommerceCustomers = () => {
         enableSorting: true,
       },
       {
-        header: "Rating",
-        accessorKey: "rating",
+        header: "alt_phone",
+        accessorKey: "alt_phone",
+        enableColumnFilter: false,
+        enableSorting: true,
+      },
+      {
+        header: "City",
+        accessorKey: "city",
         enableColumnFilter: false,
         enableSorting: true,
         cell: (cellProps) => {
@@ -180,14 +223,20 @@ const EcommerceCustomers = () => {
         }
       },
       {
-        header: "Wallet Balances",
-        accessorKey: "walletBalance",
+        header: "address",
+        accessorKey: "address",
         enableColumnFilter: false,
         enableSorting: true,
       },
       {
-        header: "Joining Date",
-        accessorKey: "joiningDate",
+        header: "state",
+        accessorKey: "state",
+        enableColumnFilter: false,
+        enableSorting: true,
+      },
+      {
+        header: "zip_code",
+        accessorKey: "zip_code",
         enableColumnFilter: false,
         enableSorting: true,
       },
@@ -314,7 +363,7 @@ const EcommerceCustomers = () => {
 
           </Row>
           <Modal isOpen={modal} toggle={toggle}>
-            <ModalHeader toggle={toggle} tag="h4">
+            <ModalHeader className="flex- text-center" toggle={toggle} tag="h4">
               {!!isEdit ? "Edit Customer" : "Add Customer"}
             </ModalHeader>
             <ModalBody>
@@ -327,43 +376,80 @@ const EcommerceCustomers = () => {
               >
                 <Row>
                   <Col className="col-12">
-                    <div className="mb-3">
-                      <Label className="form-label">UserName</Label>
+                  <div className="mb-3">
+                      <Label className="form-label">Manager</Label>
                       <Input
-                        name="username"
+                        name="manager"
                         type="text"
-                        placeholder="Insert User Name"
+                        placeholder="enter name"
                         onChange={validation.handleChange}
                         onBlur={validation.handleBlur}
-                        value={validation.values.username || ""}
+                        value={validation.values.manager || ""}
                         invalid={
-                          validation.touched.username &&
-                            validation.errors.username
+                          validation.touched.manager &&
+                            validation.errors.manager
                             ? true
                             : false
                         }
                       />
-                      {validation.touched.username &&
-                        validation.errors.username ? (
+                      {validation.touched.manager &&
+                        validation.errors.manager ? (
                         <FormFeedback type="invalid">
-                          {validation.errors.username}
+                          {validation.errors.manager}
+                        </FormFeedback>
+                      ) : null}
+                    </div>
+                    <div className="mb-3">
+                      <Label className="form-label">name</Label>
+                      <Input
+                        name="name"
+                        type="text"
+                        placeholder="enter name"
+                        onChange={validation.handleChange}
+                        onBlur={validation.handleBlur}
+                        value={validation.values.name || ""}
+                        invalid={
+                          validation.touched.name &&
+                            validation.errors.name
+                            ? true
+                            : false
+                        }
+                      />
+                      {validation.touched.name &&
+                        validation.errors.name ? (
+                        <FormFeedback type="invalid">
+                          {validation.errors.name}
                         </FormFeedback>
                       ) : null}
                     </div>
 
                     <div className="mb-3">
                       <Label className="form-label">Phone No</Label>
-                      <PatternFormat
+                      <input
                         className="form-control"
                         name="phone"
                         placeholder="Insert Phone No"
                         value={validation.values.phone || ""}
                         onChange={validation.handleChange}
-                        format="###-###-####"
                       />
 
                       {validation.touched.phone && validation.errors.phone ? (
                         <FormFeedback type="invalid" className="d-block">{validation.errors.phone}</FormFeedback>
+                      ) : null}
+                    </div>
+
+                    <div className="mb-3">
+                      <Label className="form-label">alternative phone No</Label>
+                      <input
+                        className="form-control"
+                        name="alt_phone"
+                        placeholder="Insert Phone No"
+                        value={validation.values.alt_phone || ""}
+                        onChange={validation.handleChange}
+                      />
+
+                      {validation.touched.alt_phone && validation.errors.alt_phone ? (
+                        <FormFeedback type="invalid" className="d-block">{validation.errors.alt_phone}</FormFeedback>
                       ) : null}
                     </div>
 
@@ -388,6 +474,22 @@ const EcommerceCustomers = () => {
                         <FormFeedback type="invalid">
                           {validation.errors.email}
                         </FormFeedback>
+                      ) : null}
+                    </div>
+
+                    <div className="mb-3">
+                      <Label className="form-label">GST No</Label>
+                      <input
+                        className="form-control"
+                        name="gst"
+                        placeholder="Insert gst number"
+                        value={validation.values.gst || ""}
+                        onChange={validation.handleChange}
+
+                      />
+
+                      {validation.touched.gst && validation.errors.gst ? (
+                        <FormFeedback type="invalid" className="d-block">{validation.errors.gst}</FormFeedback>
                       ) : null}
                     </div>
 
@@ -417,69 +519,81 @@ const EcommerceCustomers = () => {
                     </div>
 
                     <div className="mb-3">
-                      <Label className="form-label">Rating</Label>
+                      <Label className="form-label">city</Label>
                       <Input
-                        name="rating"
+                        name="city"
                         type="text"
-                        placeholder="Insert Rating"
+                        placeholder="Insert city"
                         onChange={validation.handleChange}
                         onBlur={validation.handleBlur}
-                        value={validation.values.rating || ""}
+                        value={validation.values.city || ""}
                         invalid={
-                          validation.touched.rating &&
-                            validation.errors.rating
+                          validation.touched.city &&
+                            validation.errors.city
                             ? true
                             : false
                         }
                       />
-                      {validation.touched.rating &&
-                        validation.errors.rating ? (
+                      {validation.touched.city &&
+                        validation.errors.city ? (
                         <FormFeedback type="invalid">
-                          {validation.errors.rating}
+                          {validation.errors.city}
                         </FormFeedback>
                       ) : null}
                     </div>
 
                     <div className="mb-3">
-                      <Label className="form-label">
-                        Wallet Balance
-                      </Label>
-                      <Input
-                        name="walletBalance"
-                        type="text"
-                        placeholder="Insert Wallet Balance"
-                        onChange={validation.handleChange}
-                        onBlur={validation.handleBlur}
-                        value={validation.values.walletBalance || ""}
-                        invalid={
-                          validation.touched.walletBalance &&
-                            validation.errors.walletBalance
-                            ? true
-                            : false
-                        }
-                      />
-                      {validation.touched.walletBalance &&
-                        validation.errors.walletBalance ? (
-                        <FormFeedback type="invalid">
-                          {validation.errors.walletBalance}
-                        </FormFeedback>
-                      ) : null}
-                    </div>
-
-                    <div className="mb-3">
-                      <Label className="form-label">Joining Date</Label>
-                      <FlatPickr
+                      <Label className="form-label">pin code </Label>
+                      <input
                         className="form-control"
-                        name="joiningDate"
-                        placeholder="Select time"
-                        value={validation.values.joiningDate || ""}
-                        options={{
-                          dateFormat: "d M, Y"
-                        }}
-                        onChange={(date) => validation.setFieldValue("joiningDate", moment(date[0]).format("DD MMMM ,YYYY"))}
+                        name="zip_code"
+                        placeholder="enter pincode "
+                        value={validation.values.zip_code || ""}
+                        onChange={validation.handleChange}
                       />
-                      {validation.touched.joiningDate && validation.errors.joiningDate ? (
-                        <FormFeedback type="invalid" className="d-block">{validation.errors.joiningDate}</FormFeedback>
+
+                      {validation.touched.phone && validation.errors.zip_code ? (
+                        <FormFeedback type="invalid" className="d-block">{validation.errors.zip_code}</FormFeedback>
+                      ) : null}
+                    </div>
+
+                    <div className="mb-3">
+                      <Label className="form-label">state</Label>
+                      <input
+                        className="form-control"
+                        name="state"
+                        placeholder="Select state"
+                        value={validation.values.state || ""}
+                        onChange={validation.handleChange}
+                        onBlur={validation.handleBlur}
+                      />
+                      {validation.touched.state && validation.errors.state ? (
+                        <FormFeedback type="invalid" className="d-block">{validation.errors.state}</FormFeedback>
+                      ) : null}
+                    </div>
+                    
+                    <div className="mb-3">
+                      <Label className="form-label">comment</Label>
+                      <Input
+                        name="comment"
+                        type="textarea"
+                        placeholder="comment"
+                        rows="3"
+                        onChange={validation.handleChange}
+                        onBlur={validation.handleBlur}
+                        value={validation.values.comment || ""}
+                        invalid={
+                          validation.touched.comment &&
+                            validation.errors.comment
+                            ? true
+                            : false
+                        }
+                      />
+                      {validation.touched.comment &&
+                        validation.errors.comment ? (
+                        <FormFeedback type="invalid">
+                          {validation.errors.comment}
+                        </FormFeedback>
                       ) : null}
                     </div>
                   </Col>

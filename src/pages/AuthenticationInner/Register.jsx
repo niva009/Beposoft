@@ -8,7 +8,7 @@
 
 
   import profileImg from "../../assets/images/profile-img.png";
-  import logoImg from "../../assets/images/logo.svg";
+  import logoImg from "../../assets/images/logo.png";
   import lightlogo from "../../assets/images/logo-light.svg";
 
   const Register = () => {
@@ -38,7 +38,7 @@
         retype_password: Yup.string().oneOf([Yup.ref('password'),null],'password must match')
       }),
       onSubmit: (values) => {
-        axios.post('https://racing-soul-suffer-alexander.trycloudflare.com/api/register/', values)
+        axios.post(`${import.meta.env.VITE_APP_APIKEY}/api/register/`, values)
           .then((res) => {
             console.log("Registration completed successfully", res.data);
             navigate('/')
@@ -99,7 +99,8 @@
                               src={logoImg}
                               alt=""
                               className="rounded-circle"
-                              height="34"
+                              height="40"
+                              width="auto"
                             />
                           </span>
                         </div>

@@ -1,4 +1,4 @@
-  import React, { useState } from "react";
+  import React, { useState} from "react";
 
   // Redux
   import { Link } from "react-router-dom";
@@ -12,7 +12,7 @@
 
   // import images
   import profile from "../../assets/images/profile-img.png";
-  import logo from "../../assets/images/logo.svg";
+  import logo from "../../assets/images/logo.png";
   import lightlogo from "../../assets/images/logo-light.svg";
 
   const Login = () => {
@@ -35,11 +35,13 @@
         password: Yup.string().required("Please Enter Your Password"),
       }),
       onSubmit: (values) => {
-        axios.post('https://racing-soul-suffer-alexander.trycloudflare.com/api/login/',values)
+        axios.post(`${import.meta.env.VITE_APP_APIKEY}/api/login/`,values)
 
         .then((res) =>{
           console.log("registration success",res);
           localStorage.setItem('token', res.data.token);
+          console.log("token information",res.data.token)
+
           localStorage.setItem('active', res.data.active);
         })
         .catch((error) =>{
@@ -212,16 +214,12 @@
                 <p>
                   Don&apos;t have an account ?{" "}
                   <Link
-                    to="pages-register"
+                    to="/pages-register"
                     className="fw-medium text-primary"
                   >
                     {" "}
                     Signup now{" "}
                   </Link>{" "}
-                </p>
-                <p>
-                  © {new Date().getFullYear()} Skote. Crafted with{" "}
-                  <i className="mdi mdi-heart text-danger" /> by Themesbrand
                 </p>
               </div>
             </Col>
